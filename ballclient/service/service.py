@@ -37,7 +37,7 @@ def Defense1(map, player):
                 d_x.append(j)
     # 如果视野内没有敌人 看看附近有没有分数
     if len(d_x) == 0:
-        return "down"#Attack(map, player, [])
+        return Defense1_Attack(map, player, [])
     d = []
     #计算与敌人的距离
     for i in range(len(d_x)):
@@ -86,7 +86,7 @@ def Defense1(map, player):
                 return 'left'
             else:
                 return 'right'
-        return 'right'#Attack(map, player)
+        return Defense1_Attack(map, player)
     # 这个敌人在下面
     elif r_x == 0 and r_y > 0:
         if y > 1 and map[y - 2][x][0] != '-':
@@ -267,6 +267,216 @@ def Defense1(map, player):
             else:
                 res = "up"
     return res
+def Defense1_Attack(map, player,zj):
+    x = int(player['x'])
+    y = int(player['y'])
+    d_x = []
+    d_y = []
+    r_x = 0
+    r_y = 0
+    s = []
+    d = []
+    res = ""
+    direction = {1: 'up', 2: 'down', 3: 'left', 4: 'right'}
+    for i in range(height):  # 读取基础地图
+        for j in range(width):
+            try:
+                if map[i][j][0] == '-' or map[i][j][0] == 'p':#有敌人和分
+                    s.append(int(map[i][j][1:]))
+                    d_y.append(i)
+                    d_x.append(j)
+            except ValueError:
+                continue
+    if(len(d_x) == 0): #敌人和分数都没有
+        if x < 2:
+            if map[y][x + 1] != 'x' and map[y][x + 1] != '<' and (str(x + 1) + '_' + str(y)) not in zj:
+                return "right"
+        if x > width - 3:
+            if map[y][x -1] != 'x' and map[y][x -1] != '>'and (str(x - 1) + '_' + str(y)) not in zj:
+                return "left"
+        if y < 2:
+            if map[y + 1][x] != 'x' and map[y + 1][x] != '^' and (str(x) + '_' + str(y + 1)) not in zj:
+                return "down"
+        if y > height - 3:
+            if map[y - 1][x] != 'x' and map[y - 1][x] != 'V' and (str(x) + '_' + str(y - 1)) not in zj:
+                return 'up'
+        return direction[random.randint(1, 4)] #随机走
+    else:   #地图上有敌人或分数
+        d = []
+        # 计算与敌人的距离
+        for i in range(len(d_x)):
+            d.append(pow((pow((d_x[i] - x), 2)) + pow(d_y[i] - y, 2), 0.5))
+        # 这里配置权重
+        for i in range(len(d)):
+            if d[i] == 1:
+                r_x += (d_x[i] - x) * 0.9 * pow(10, s[i])
+                r_y += (d_y[i] - y) * 0.9 * pow(10, s[i])
+            elif 2 > d[i] > 1:
+                r_x += (d_x[i] - x) * 0.09 * pow(10, s[i])
+                r_y += (d_y[i] - y) * 0.09 * pow(10, s[i])
+            elif d[i] == 2:
+                r_x += (d_x[i] - x) * 0.009 * pow(10, s[i])
+                r_y += (d_y[i] - y) * 0.009 * pow(10, s[i])
+            elif 3 > d[i] > 2:
+                r_x += (d_x[i] - x) * 0.0009 * pow(10, s[i])
+                r_y += (d_y[i] - y) * 0.0009 * pow(10, s[i])
+            elif d[i] == 3:
+                r_x += (d_x[i] - x) * 0.00009 * pow(10, s[i])
+                r_y += (d_y[i] - y) * 0.00009 * pow(10, s[i])
+            elif 4 > d[i] > 3:
+                r_x += (d_x[i] - x) * 0.00001 * pow(10, s[i])
+                r_y += (d_y[i] - y) * 0.00001 * pow(10, s[i])
+        # 离得很远#或者两个方向的相同抵消了
+        if r_x == 0 and r_y == 0:
+            try:
+                if x > 0:
+                    a1 = int(map[y][x - 1][1:])
+            except ValueError:
+                a1 = 0
+            try:
+                if x < width - 1:
+                    a2 = int(map[y][x + 1][1:])
+            except ValueError:
+                a2 = 0
+            try:
+                if y > 0:
+                    a3 = int(map[y - 1][x][1:])
+            except ValueError:
+                a3 = 0
+            try:
+                if y< height - 1:
+                    a4 = int(map[y + 1][x][1:])
+            except ValueError:
+                a4 = 0
+            # 认为在左右两侧
+            if x > 0 and (0 < a1) and (str(x - 1) + '_' + str(y)) not in zj:
+                return 'left'
+            elif x < (width - 1) and (a2 > 0) and (str(x + 1) + '_' + str(y)) not in zj:
+                return 'right'
+            # 认为在上下两侧
+            elif y > 0 and (a3 > 0) and (str(x) + '_' + str(y - 1)) not in zj:
+                return 'up'
+            # 认为在上下两侧
+            elif y < height - 1 and (a4 > 0) and (str(x) + '_' + str(y + 1)) not in zj:
+                return 'down'
+            # 分/敌人离得很远
+            else:
+                if x < 2:
+                    if map[y][x + 1] != 'x' and map[y][x + 1] != '<' and (str(x + 1) + '_' + str(y)) not in zj:
+                        return "right"
+                if x > width - 2:
+                    if map[y][x - 1] != 'x' and map[y][x - 1] != '>' and (str(x - 1) + '_' + str(y)) not in zj:
+                        return "left"
+                if y < 2:
+                    if map[y + 1][x] != 'x' and map[y + 1][x] != '^' and (str(x) + '_' + str(y + 1)) not in zj:
+                        return "down"
+                if y > height - 2:
+                    if map[y - 1][x] != 'x' and map[y - 1][x] != 'V' and (str(x) + '_' + str(y - 1)) not in zj:
+                        return 'up'
+            return direction[random.randint(1, 4)]  # 随机走
+        # 这个分数在下面
+        elif r_x == 0 and r_y > 0:
+            if y < height - 1 and (map[y + 1][x] != 'x' and map[y + 1][x] != '+' and map[y - 1][x] != '^') and (str(x) + '_' + str(y + 1)) not in zj:
+                res = "down"
+            elif x < width - 1 and (map[y][x + 1] != 'x' and map[y][x + 1] != '+' and map[y][x + 1] != '<') and (str(x + 1) + '_' + str(y)) not in zj:
+                res = 'right'
+            else:
+                res = 'up'
+        # 这个分在上面
+        elif r_x == 0 and r_y < 0:
+            if y > 0 and (map[y - 1][x] != 'x' and map[y - 1][x] != '+' and map[y - 1][x] != 'V') and (str(x) + '_' + str(y - 1)) not in zj:
+                res = 'up'
+            elif x < width - 1 and (map[y][x + 1] != 'x' and map[y][x + 1] != '+' and map[y][x + 1] != '<') and (str(x + 1) + '_' + str(y)) not in zj:
+                res = 'right'
+            else:
+                res = 'left'
+        # 这个分在右面
+        elif r_x > 0 and r_y == 0:
+            if x < width - 1 and (map[y][x + 1] != 'x' and map[y][x + 1] != '+' and map[y][x + 1] != '<') and (str(x + 1) + '_' + str(y)) not in zj:
+                res = 'right'
+            elif y > 0 and (map[y - 1][x] != 'x' and map[y - 1][x] != '+' and map[y - 1][x] != 'V') and (str(x) + '_' + str(y - 1)) not in zj:
+                res = 'up'
+            else:
+                res = 'down'
+        # 这个敌人在左面
+        elif r_x < 0 and r_y == 0:
+            if x > 0 and (map[y][x - 1] != 'x' and map[y][x - 1] != '+' and map[y][x - 1] != '>') and (str(x - 1) + '_' + str(y)) not in zj:
+                res = 'left'
+            elif y > 0 and (map[y - 1][x] != 'x' and map[y - 1][x] != '+' and map[y - 1][x] != 'V') and (str(x) + '_' + str(y - 1)) not in zj:
+                res = 'up'
+            else:
+                res = 'down'
+        else:
+            O = r_y / r_x
+            # 方向向下
+            if (O > 1 or O < -1) and r_y > 0:
+                if y < height - 1 and (map[y + 1][x] != 'x' and map[y + 1][x] != '+' and map[y + 1][x] != '^') and (str(x) + '_' + str(y + 1)) not in zj:
+                    res = "down"
+                else:
+                    if O < 0 and (map[y][x - 1] != 'x' and map[y][x - 1] != '+' and map[y][x - 1] != '>') and (str(x - 1) + '_' + str(y)) not in zj:
+                        res = 'left'
+                    else:
+                        res = 'right'
+            # 方向向上
+            elif (O > 1 or O < -1) and r_y < 0:
+                if y > 0 and (map[y - 1][x] != 'x' and map[y - 1][x] != '+' and map[y - 1][x] != 'V') and (str(x) + '_' + str(y - 1)) not in zj:
+                    res = "up"
+                else:
+                    if O > 0 and (map[y][x + 1] != 'x' and map[y][x + 1] != '+' and map[y][x + 1] != '<') and (str(x + 1) + '_' + str(y)) not in zj:
+                        res = 'right'
+                    else:
+                        res = 'left'
+            # 方向向右
+            elif -1 < O < 1 and r_x > 0:
+                if x < width - 1 and (map[y][x + 1] != 'x' and map[y][x + 1] != '+' and map[y][x + 1] != '<') and (str(x + 1) + '_' + str(y)) not in zj:
+                    res = "right"
+                else:
+                    if O > 0 and (map[y + 1][x] != 'x' and map[y + 1][x] != '+' and map[y + 1][x] != '^') and (str(x) + '_' + str(y + 1)) not in zj:
+                        res = 'down'
+                    else:
+                        res = 'up'
+            # 方向向左
+            elif -1 < O < 1 and r_x < 0:
+                if x > 0 and (map[y][x - 1] != 'x' and map[y][x - 1] != '+' and map[y][x - 1] != '>') and (str(x - 1) + '_' + str(y)) not in zj:
+                    res = "left"
+                else:
+                    if O > 0 and (map[y - 1][x] != 'x' and map[y - 1][x] != '+' and map[y - 1][x] != 'V') and (str(x) + '_' + str(y - 1)) not in zj:
+                        res = 'up'
+                    else:
+                        res = 'down'
+            # 判断两个方向走都可以的情况 右上
+            elif O == -1 and r_x > 0:
+                if x < width -1 and (map[y][x +1] != 'x' and map[y][x +1] != '+' and map[y][x +1] != '<') and (str(x + 1) + '_' + str(y)) not in zj:#右侧没有石头并且油路
+                    res = "right"
+                elif y > 0 and (map[y - 1][x] != 'x' and map[y - 1][x] != '+' and map[y - 1][x] != 'V') and (str(x) + '_' + str(y - 1)) not in zj:    #上侧没有石头并且有路
+                    res = "up"
+                else:
+                    res = "left"
+            # 判断两个方向走都可以的情况 左上
+            elif O == 1 and r_x < 0 :
+                if x > 0 and (map[y][x - 1] != 'x' and map[y][x - 1] != '+' and map[y][x - 1] != '>') and (str(x - 1) + '_' + str(y)) not in zj:#左侧没有石头并且油路
+                    res = "left"
+                elif y > 0 and (map[y - 1][x] != 'x' and map[y - 1][x] != '+' and map[y - 1][x] != 'V') and (str(x) + '_' + str(y - 1)) not in zj:  # 上侧没有石头并且有路
+                    res = "up"
+                else:
+                    res = "down"
+            # 判断两个方向走都可以的情况 左下
+            elif O == -1 and r_x < 0:
+                if x > 0  and (map[y][x - 1] != 'x' and map[y][x - 1] != '+' and map[y][x - 1] != '<') and (str(x - 1) + '_' + str(y)) not in zj:#zuo侧没有石头并且油路
+                    res = "left"
+                elif y < height - 1 and (map[y + 1][x] != 'x' and map[y + 1][x] != '+' and map[y + 1][x] != '^') and (str(x) + '_' + str(y + 1)) not in zj:  # 下侧没有石头并且有路
+                    res = "down"
+                else:
+                    res = "right"
+            # 判断两个方向走都可以的情况 右xia
+            elif O == 1 and r_x > 0:
+                if x < width - 1 and (map[y][x + 1] != 'x' and map[y][x + 1] != '+' and map[y][x + 1] != '<') and (str(x + 1) + '_' + str(y)) not in zj:#右侧没有石头并且油路
+                    res = "right"
+                elif y < height - 1 and (map[y + 1][x] != 'x' and map[y + 1][x] != '+' and map[y + 1][x] != '^') and (str(x) + '_' + str(y + 1)) not in zj:    #下侧没有石头并且有路
+                    res = "down"
+                else:
+                    res = "up"
+    return res
 #计算最短路径
 def Dijkstra_all_minpath(start, end,matrix):
     length = len(matrix)  # 该图的节点数
@@ -277,7 +487,9 @@ def Dijkstra_all_minpath(start, end,matrix):
     temp_array[start] = 100000  # 临时数组会把处理过的节点的值变成inf，表示不是最小权值的节点了
     already_traversal = [start]  # start已处理
     path_parent = [start] * length  # 用于画路径，记录此路径中该节点的父节点
+    num = 0
     while (1 == 1):
+        num += 1
         i = temp_array.index(min(temp_array))  # 找最小权值的节点的坐标
         temp_array[i] = 100000
         path = []  # 用于画路径
@@ -290,6 +502,8 @@ def Dijkstra_all_minpath(start, end,matrix):
         if i in end:
             path.reverse()  # path反序产生路径
             return path[1], i
+        if num == 200:
+            return 0,0
         already_traversal.append(i)  # 该索引已经处理了
         for j in range(length):  # 这个不用多说了吧
             if j not in already_traversal:
@@ -307,7 +521,7 @@ def Attack(map, players,round_id):
     #
     '''
     #输出返回的结果
-    res = []
+    res = {}
     #算法部分
     #查找地图找出 当前分数最高的人或者分数的位置
     garde = garde_x = garde_y = 0
@@ -322,50 +536,54 @@ def Attack(map, players,round_id):
     # 把相邻矩阵拿出来复制一遍
     Dijkstra_map_l = copy.deepcopy(Dijkstra_map)
     #找到了带有分的敌人 值得吃的
-    if garde >= 10:
+    if garde >= 12:
         #对每一个角色进行遍历 看看是不是自己的角色 如果是自己的角色就对其安排任务
         for player in players:
             if player['team'] == constants.team_id:
                 y = int(player["y"])
                 x = int(player["x"])
-                # if Dijkstra_map_l[y*height + x][y*height + x + 1] == 100000 and\
-                #     Dijkstra_map_l[y*height + x][y*height + x + 1] == 100000 and\
-                #     Dijkstra_map_l[y*height + x - 1][y*height + x] == 100000 and\
-                #     Dijkstra_map_l[y*height + x + 1][y*height + x] == 100000:
-                #     res.append("")
-                #     d_rl[player['id']] = ""
-                #     continue
-
                 #计算下一个要走的路
                 [res_xy, n] = Dijkstra_all_minpath(y * height + x, [garde_y * height + garde_x], Dijkstra_map_l)
+                #需要走很远的路 就自己走自己的
+                if int(res_xy) == 0 and n == 0:
+                    res[player['id']] = Attack_myself(player,Dijkstra_map_l)
+                    continue
                 res_xy = int(res_xy)
                 # 计算下一步的位置
                 res_y = int(res_xy / height)
                 res_x = int(res_xy % height)
                 #计算走的方式
                 if res_y == y and res_x == x - 1:
-                    res.append("left")
+                    res[player['id']] = "left"
                     d_rl[player['id']] = "left"
+                    if res_x - 1 >= 0 and garde_y == res_y and garde_x == res_x and map[res_y][res_x - 1] != 'x':
+                        garde_x -= 1
                 elif res_y == y and res_x == x + 1:
-                    res.append("right")
+                    res[player['id']] = "right"
                     d_rl[player['id']] = "right"
+                    if res_x + 1 < width and garde_y == res_y and garde_x == res_x and map[res_y][res_x + 1] != 'x':
+                        garde_x += 1
                 elif res_y == y - 1 and res_x == x:
-                    res.append("up")
+                    res[player['id']] = "up"
                     d_rl[player['id']] = "up"
+                    if res_y - 1 >= 0 and garde_y == res_y and garde_x == res_x and map[res_y - 1][res_x] != 'x':
+                        garde_y -= 1
                 elif res_y == y + 1 and res_x == x:
-                    res.append("down")
+                    res[player['id']] = "down"
                     d_rl[player['id']] = "down"
+                    if res_y + 1 < height and garde_y == res_y and garde_x == res_x and map[res_y + 1][res_x] != 'x':
+                        garde_y += 1
                 else:
                     pass
-                #更新数组 把走过的点变成石头 让其他队友不再走这里
-                # if res_xy - 1 >= 0 and Dijkstra_map_l[res_xy - 1][res_xy] == 50:
-                #     Dijkstra_map_l[res_xy - 1][res_xy] = 51
-                # if res_xy + 1 < 400 and Dijkstra_map_l[res_xy + 1][res_xy] == 50:
-                #     Dijkstra_map_l[res_xy + 1][res_xy] = 51
-                # if res_xy + height < 400 and Dijkstra_map_l[res_xy + height][res_xy] == 50:
-                #     Dijkstra_map_l[res_xy + height][res_xy] = 51
-                # if res_xy - height >= 0 and Dijkstra_map_l[res_xy - height][res_xy] == 50:
-                #     Dijkstra_map_l[res_xy - height][res_xy] = 51
+                #更新数组 把走过的点变成石头 让其他队友不再走这里 避免重合
+                if res_x - 1 >= 0 and Dijkstra_map_l[res_xy - 1][res_xy] == 50:
+                    Dijkstra_map_l[res_xy - 1][res_xy] = 300
+                if res_x + 1 < width and Dijkstra_map_l[res_xy + 1][res_xy] == 50:
+                    Dijkstra_map_l[res_xy + 1][res_xy] = 300
+                if res_y - 1 >= 0 and Dijkstra_map_l[res_xy - 20][res_xy] == 50:
+                    Dijkstra_map_l[res_xy - 20][res_xy] = 300
+                if res_y + 1 < height  and Dijkstra_map_l[res_xy + 20][res_xy] == 50:
+                    Dijkstra_map_l[res_xy + 20][res_xy] = 300
     #只找到了分数 和不值得吃的敌人
     else:
         num = 0
@@ -383,89 +601,178 @@ def Attack(map, players,round_id):
                 if num == 0:
                     # 上一次是追击敌人 敌人突然消失或者被吃掉
                     if player['id'] in d_rl.keys():
-                        res.append(d_rl[player['id']])
+                        res[player['id']] = d_rl[player['id']]
                         del d_rl[player['id']]
-                    # 上一次是吃分 或者其他情况 去查历史 图形
+                    #上一次是吃分 或者其他情况 去查历史 图形
                     else:
-                        gardes1 = []
-                        nums = 0
-                        #查历史地图
-                        for i in range(height):
-                            for j in range(width):
-                                #这个点是分数并且不和现在的记录重合
-                                if map_f[i][j][0] == 'p':
-                                    nums += 1
-                                    gardes1.append(i * height + j)
-                        y = int(player["y"])
-                        x = int(player["x"])
-                        #如果这个自己所在的点历史上是分数 就把这个点除去 防止一直在一个点呆着
-                        if (y * height + x) in gardes1:
-                            gardes1.remove(y * height + x)
-                            nums -= 1
-                        #如果历史上没有分数点了 按顺序遍历地图 让所有的点都依次出现在视野中
-                        if nums == 0:
-                            res.append("left")#随便走的
-                        #历史上有分数点
-                        else:
-                            # 计算下一个要走的路
-                            [res_xy, n] = Dijkstra_all_minpath(y * height + x, gardes1, Dijkstra_map_l)
-                            res_xy = int(res_xy)
-                            # 计算下一步的位置
-                            res_y = int(res_xy / height)
-                            res_x = int(res_xy % height)
-                            # 计算走的方式
-                            if res_y == y and res_x == x - 1:
-                                res.append("left")
-                            elif res_y == y and res_x == x + 1:
-                                res.append("right")
-                            elif res_y == y - 1 and res_x == x:
-                                res.append("up")
-                            elif res_y == y + 1 and res_x == x:
-                                res.append("down")
-                            else:
-                                pass
-                            #如果我在的这个点在历史上是分数点 就清除它
-                            if map_f[int(res_xy/height)][res_xy % height][0] == "p":
-                                map_f[int(res_xy / height)][res_xy % height] = 'o'
+                        res[player['id']] = Attack_myself(player, Dijkstra_map_l)
                 #对每一个角色让他去找地图上离他最近的分数 已经被定位目标的分数不再成为别人的目标
                 else:
                     y = int(player["y"])
                     x = int(player["x"])
                     # 计算下一个要走的路
                     [res_xy, n] = Dijkstra_all_minpath(y * height + x, gardes, Dijkstra_map_l)
+                    if int(res_xy) == 0 and n == 0:
+                        res[player['id']] = Attack_myself(player, Dijkstra_map_l)
+                        continue
                     res_xy = int(res_xy)
                     # 计算下一步的位置
                     res_y = int(res_xy / height)
                     res_x = int(res_xy % height)
                     # 计算走的方式
                     if res_y == y and res_x == x - 1:
-                        res.append("left")
+                        res[player['id']] = "left"
                     elif res_y == y and res_x == x + 1:
-                        res.append("right")
+                        res[player['id']] = "right"
                     elif res_y == y - 1 and res_x == x:
-                        res.append("up")
+                        res[player['id']] = "up"
                     elif res_y == y + 1 and res_x == x:
-                        res.append("down")
+                        res[player['id']] = "down"
                     else:
                         pass
                     # 去掉这个目标点
                     gardes.remove(n)
                     num -= 1
                     #更新数组 把走过的点变成石头 让其他队友不再走这里 避免重合
-                    # if res_xy - 1 >= 0 and Dijkstra_map_l[res_xy - 1][res_xy] == 50:
-                    #     Dijkstra_map_l[res_xy - 1][res_xy] = 51
-                    # if res_xy + 1 < 400 and Dijkstra_map_l[res_xy + 1][res_xy] == 50:
-                    #     Dijkstra_map_l[res_xy + 1][res_xy] = 51
-                    # if res_xy + height < 400 and Dijkstra_map_l[res_xy + height][res_xy] == 50:
-                    #     Dijkstra_map_l[res_xy + height][res_xy] = 51
-                    # if res_xy - height >= 0 and Dijkstra_map_l[res_xy - height][res_xy] == 50:
-                    #     Dijkstra_map_l[res_xy - height][res_xy] = 51
+                    if res_x - 1 >= 0 and Dijkstra_map_l[res_xy - 1][res_xy] == 50:
+                        Dijkstra_map_l[res_xy - 1][res_xy] = 300
+                    if res_x + 1 < width and Dijkstra_map_l[res_xy + 1][res_xy] == 50:
+                        Dijkstra_map_l[res_xy + 1][res_xy] = 300
+                    if res_y - 1 >= 0 and Dijkstra_map_l[res_xy - 20][res_xy] == 50:
+                        Dijkstra_map_l[res_xy - 20][res_xy] = 300
+                    if res_y + 1 < height  and Dijkstra_map_l[res_xy + 20][res_xy] == 50:
+                        Dijkstra_map_l[res_xy + 20][res_xy] = 300
     return res
+#吃糖
+def sweets(map,player,Dijkstra_map_l):
+    num = 0
+    gardes = []
+    # 遍历地图 看看地图上那些地方有分数
+    for i in range(height):  # 读取地图
+        for j in range(width):
+            if map[i][j][0] == 'p':
+                num += 1
+                gardes.append(i * height + j)
+    y = int(player["y"])
+    x = int(player["x"])
+    # 计算下一个要走的路
+    [res_xy, n] = Dijkstra_all_minpath(y * height + x, gardes, Dijkstra_map_l)
+    #没有糖
+    if int(res_xy) == 0 and n == 0:
+        return Attack_myself(player,Dijkstra_map_l)
+    res_xy = int(res_xy)
+    # 计算下一步的位置
+    res_y = int(res_xy / height)
+    res_x = int(res_xy % height)
+    # 计算走的方式
+    if res_y == y and res_x == x - 1:
+        return "left"
+    elif res_y == y and res_x == x + 1:
+        return "right"
+    elif res_y == y - 1 and res_x == x:
+        return "up"
+    elif res_y == y + 1 and res_x == x:
+        return "down"
+#开拓地图
+def Attack_myself(player,Dijkstra_map_l):
+        heistor = []
+        for i in range(height * width):
+            if heistor_eye[i] == 0:
+                heistor.append(i)
+        y = int(player["y"])
+        x = int(player["x"])
+        # 计算下一个要走的路
+        [res_xy, n] = Dijkstra_all_minpath(y * height + x, heistor, Dijkstra_map_l)
+        if int(res_xy) == 0 and n == 0:
+            return 'left'
+        res_xy = int(res_xy)
+        # 计算下一步的位置
+        res_y = int(res_xy / height)
+        res_x = int(res_xy % height)
+        # 计算走的方式
+        if res_y == y and res_x == x - 1:
+            return "left"
+        elif res_y == y and res_x == x + 1:
+            return "right"
+        elif res_y == y - 1 and res_x == x:
+            return "up"
+        elif res_y == y + 1 and res_x == x:
+            return "down"
+
 #防守模式
 def Defense(map, players,round_id):
-    res = []
+    '''
+    #现根据敌人的位置 将敌人可能走的地方的权重全都变掉 使自己不能去
+    #如果视野里有分再去吃分
+    #如果没有分的话就去没去过的地方
+    '''
+    # 把相邻矩阵拿出来复制一遍
+    # Dijkstra_map_l = copy.deepcopy(Dijkstra_map)
+    # # 对每一个角色进行遍历 看看是不是自己的角色 如果不是自己的角色就变更权重矩阵
+    # for player in players:
+    #     if player['team'] != constants.team_id:
+    #         a = int(player['y']) * height + int(player['x'])#计算敌人再权重矩阵中的位置
+    #         if int(player['x']) - 1 >= 0 and Dijkstra_map_l[a - 1][a] == 50 \
+    #                 and map[int(player['y'])][int(player['x']) - 1] != '+':
+    #             for i in range(height * width):
+    #                 Dijkstra_map_l[i][a - 1] = 100000
+    #         if int(player['x']) + 1 < width and Dijkstra_map_l[a + 1][a] == 50 \
+    #                 and map[int(player['y'])][int(player['x']) + 1] != '+':
+    #             for i in range(height * width):
+    #                 Dijkstra_map_l[i][a + 1] = 100000
+    #         if int(player['y']) - 1 >= 0 and Dijkstra_map_l[a - 20][a] == 50\
+    #                 and map[int(player['y']) - 1][int(player['x'])] != '+':
+    #             for i in range(height * width):
+    #                 Dijkstra_map_l[i][a - 20] = 100000
+    #         if int(player['y']) + 1 < height and Dijkstra_map_l[a + 20][a] == 50\
+    #                 and map[int(player['y']) + 1][int(player['x'])] != '+':
+    #             for i in range(height * width):
+    #                 Dijkstra_map_l[i][a + 20] = 100000
+    # res = {}
+    # # 遍历地图 看看地图上那些地方有分数
+    # num = 0
+    # gardes = []
+    # for i in range(height):  # 读取地图
+    #     for j in range(width):
+    #         if map[i][j][0] == 'p':
+    #             num += 1
+    #             gardes.append(i * height + j)
+    # 对每一个角色进行遍历 看看是不是自己的角色 如果是自己的角色就安排任务
+    res = {}
     for player in players:
-        res.append(Defense1(map, player))
+        if player['team'] == constants.team_id:
+            res[player['id']] = Defense1(map, player)
+            # #视野中有分数 派一个人去吃它
+            # if num != 0:
+            #     y = int(player["y"])
+            #     x = int(player["x"])
+            #     # 计算下一个要走的路
+            #     [res_xy, n] = Dijkstra_all_minpath(y * height + x, gardes, Dijkstra_map_l)
+            #     if int(res_xy) == 0 and n == 0:
+            #         res[player['id']] = Attack_myself(player, Dijkstra_map_l)
+            #         continue
+            #     res_xy = int(res_xy)
+            #     # 计算下一步的位置
+            #     res_y = int(res_xy / height)
+            #     res_x = int(res_xy % height)
+            #     # 计算走的方式
+            #     if res_y == y and res_x == x - 1:
+            #         res[player['id']] = "left"
+            #     elif res_y == y and res_x == x + 1:
+            #         res[player['id']] = "right"
+            #     elif res_y == y - 1 and res_x == x:
+            #         res[player['id']] = "up"
+            #     elif res_y == y + 1 and res_x == x:
+            #         res[player['id']] = "down"
+            #     else:
+            #         pass
+            #     # 去掉这个目标点
+            #     gardes.remove(n)
+            #     num -= 1
+            # #视野中没有分数 去刷新历史地图
+            # else:
+            #     res[player['id']] = Attack_myself(player, Dijkstra_map_l)
+
     return res
 def leg_start(msg):
     '''
@@ -483,12 +790,16 @@ def leg_start(msg):
         global R_B
         global Dijkstra_map
         global d_rl
+        global heistor_eye
     finally:
         a = 1 + 1
     d_rl = {}
+    # 地图范围
     height = int(msg['msg_data']['map']['height'])
     width = int(msg['msg_data']['map']['width'])
+    #视野范围
     vision = int(msg['msg_data']['map']['vision'])
+    #地图构建
     map_s = [['o' for i in range(width)]for i in range(height)]         #可以走的地方
     for itm in msg['msg_data']['map']['meteor']:
         map_s[int(itm['y'])][int(itm['x'])] = 'x'                       #陨石
@@ -502,9 +813,11 @@ def leg_start(msg):
         elif itm['direction'] == 'right':
             map_s[int(itm['y'])][int(itm['x'])] = '>'                   #快速通道
     for itm in msg['msg_data']['map']['wormhole']:
-            map_s[int(itm['y'])][int(itm['x'])] = itm['name']          #传送门
-    Dijkstra_map = [[100000 for i in range(height * width)] for i in range(height * width)]
+            map_s[int(itm['y'])][int(itm['x'])] = itm['name']          #传送门\
+    #历史步数
+    heistor_eye = { i:0 for i in range(width * height)}
     # 计算一个权重矩阵 用于计算最短路径
+    Dijkstra_map = [[100000 for i in range(height * width)] for i in range(height * width)]
     for i in range(height * width):
         for j in range(height * width):
             # 将j和i 转换为 坐标值
@@ -636,9 +949,6 @@ def round(msg):
        a = 1 + 1
     # 创建本回合的视野地图
     round_map = copy.deepcopy(map_s)               #创建地图模型
-    # for i in range(height):                                                  #读取基础地图
-    #     for j in range(width):
-    #         round_map[i][j] = map_s[i][j]
     try:                                                                    #获取能量位置
         for itm in msg['msg_data']['power']:
             round_map[int(itm['y'])][int(itm['x'])] = 'p' + str(itm['point'])
@@ -662,23 +972,27 @@ def round(msg):
         players = []
     # 获取本回合的进攻防守模式 beat防守 think进攻
     mode = msg['msg_data']['mode']
-    #确定自己的动作
-    action = []
     # 记录足迹
-    zj = []
+    for i in range(height * width):
+        if heistor_eye[i] != 0:
+            heistor_eye[i] -= 1
+    for player in players:
+        if player['team'] == constants.team_id:
+            for i in range(vision):
+                for j in range(vision):
+                    heistor_eye[(int(player['y']) + width * j) * height + int(player['x']) + i] = 40
     # 进攻模式
     if str(mode) == str(R_B):
         resove = Attack(round_map, players, round_id)
     #防守模式
     else:
         resove = Defense(round_map, players, round_id)
-    i = 0
     #返回信息模型
+    action = []
     for player in players:
         if player['team'] == constants.team_id:
             action.append({"team": player['team'], "player_id": player['id'],
-                           "move": [resove[i]]})
-            i += 1
+                           "move": [resove[player['id']]]})
     result = {
         "msg_name": "action",
         "msg_data": {
@@ -690,11 +1004,13 @@ def round(msg):
     f = open("./out.txt", "a")
     print("youshi:{}:{}".format(msg['msg_data']['mode'], round_id))
     #print(result, file=f)
-    print(msg, file=f)
-    for i in range(height):
-        for j in range(width):
-            print(round_map[i][j], end=" ", file=f)
-        print("", end="\n", file=f)
+    print("a = " + str(round_id), file=f)
+    print('msg = ' + str(msg), file=f)
+    print('print(ser.round(msg))', file=f)
+    # for i in range(height):
+    #     for j in range(width):
+    #         print(round_map[i][j], end=" ", file=f)----------
+    #     print("", end="\n", file=f)
 
     return result
 
