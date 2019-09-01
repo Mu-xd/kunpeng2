@@ -56,15 +56,16 @@ def start(ip=None, port=None):
                 service.game_over(data)
                 return
             else:
-                print ("invalid msg_name.")
+                print("invalid msg_name.")
     except socket.error:
-        f =open("./out.txt", "a")
+        f = open("./out.txt", "a")
         print ("can not connect with server. %s,%s" % (ip, port))
         print ("can not connect with server. %s,%s" % (ip, port),file=f)
     except Exception as e:
         f =open("./out.txt", "a")
         print ("some error happend. the receive data:",data,type(data))
         print ("some error happend. the receive data:",data,type(data),file=f)
+        print ("11111111",repr(e),file=f)
     finally:
         if _socket:
             _socket.close()
@@ -93,8 +94,8 @@ class Receiver(object):
 
     def __call__(self, *args, **kwargs):
         while 1:
-            d = _socket.recv(SOCKET_CACHE)
             try:
+                d = _socket.recv(SOCKET_CACHE)
                 if d[:5].isdigit() and d[5] == 123:
                     # print(d)
                     self._cach = ""
@@ -105,7 +106,7 @@ class Receiver(object):
                     return json.loads(data)
             except Exception:
                 print ("receive data error.cach the data and wait for next.")
-                self._cach += d
+                self._cach += str(d)
 
 _receive = Receiver()
 

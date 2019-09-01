@@ -478,7 +478,7 @@ def Defense1_Attack(map, player,zj):
                     res = "up"
     return res
 #计算最短路径
-def Dijkstra_all_minpath(start, end,matrix):
+def Dijkstra_all_minpath(start, end,matrix,mode = 0):
     length = len(matrix)  # 该图的节点数
     path_array = []
     temp_array = []
@@ -488,6 +488,7 @@ def Dijkstra_all_minpath(start, end,matrix):
     already_traversal = [start]  # start已处理
     path_parent = [start] * length  # 用于画路径，记录此路径中该节点的父节点
     num = 0
+    p_q = []
     while (1 == 1):
         num += 1
         i = temp_array.index(min(temp_array))  # 找最小权值的节点的坐标
@@ -503,13 +504,20 @@ def Dijkstra_all_minpath(start, end,matrix):
             path.reverse()  # path反序产生路径
             return path[1], i
         if num == 200:
-            return 0,0
+            if mode == 1:
+                return p_q[1], '*'
+            else:
+                return 0,0
+        if num == 1:
+            path.reverse()
+            p_q = path
         already_traversal.append(i)  # 该索引已经处理了
         for j in range(length):  # 这个不用多说了吧
             if j not in already_traversal:
                 if (path_array[i] + matrix[i][j]) < path_array[j]:
                     path_array[j] = temp_array[j] = path_array[i] + matrix[i][j]
                     path_parent[j] = i  # 说明父节点是i
+    return p_q[1], '*'
 #进攻模式
 def Attack(map, players,round_id):
     '''
@@ -656,7 +664,7 @@ def sweets(map,player,Dijkstra_map_l):
     y = int(player["y"])
     x = int(player["x"])
     # 计算下一个要走的路
-    [res_xy, n] = Dijkstra_all_minpath(y * height + x, gardes, Dijkstra_map_l)
+    [res_xy, n] = Dijkstra_all_minpath(y * height + x, gardes, Dijkstra_map_l,1)
     #没有糖
     if int(res_xy) == 0 and n == 0:
         return Attack_myself(player,Dijkstra_map_l)
@@ -698,50 +706,121 @@ def Attack_myself(player,Dijkstra_map_l):
             return "up"
         elif res_y == y + 1 and res_x == x:
             return "down"
-
 #防守模式
+def Defense_change_l(l,vision,map):
+    #y
+    if int(l / vision) > 0:
+        map[l - vision * 2][l] = 200000
+    if int(l / vision) < 2 * vision - 1:
+        map[l + vision * 2][l] = 200000
+    if int(l % vision) > 0:
+        map[l][l - 1] = 200000
+    if int(l % vision) < 2*vision - 1:
+        map[l][l + 1] = 200000
+    return map
 def Defense(map, players,round_id):
     '''
     #现根据敌人的位置 将敌人可能走的地方的权重全都变掉 使自己不能去
     #如果视野里有分再去吃分
     #如果没有分的话就去没去过的地方
     '''
-    # 把相邻矩阵拿出来复制一遍
-    # Dijkstra_map_l = copy.deepcopy(Dijkstra_map)
-    # # 对每一个角色进行遍历 看看是不是自己的角色 如果不是自己的角色就变更权重矩阵
-    # for player in players:
-    #     if player['team'] != constants.team_id:
-    #         a = int(player['y']) * height + int(player['x'])#计算敌人再权重矩阵中的位置
-    #         if int(player['x']) - 1 >= 0 and Dijkstra_map_l[a - 1][a] == 50 \
-    #                 and map[int(player['y'])][int(player['x']) - 1] != '+':
-    #             for i in range(height * width):
-    #                 Dijkstra_map_l[i][a - 1] = 100000
-    #         if int(player['x']) + 1 < width and Dijkstra_map_l[a + 1][a] == 50 \
-    #                 and map[int(player['y'])][int(player['x']) + 1] != '+':
-    #             for i in range(height * width):
-    #                 Dijkstra_map_l[i][a + 1] = 100000
-    #         if int(player['y']) - 1 >= 0 and Dijkstra_map_l[a - 20][a] == 50\
-    #                 and map[int(player['y']) - 1][int(player['x'])] != '+':
-    #             for i in range(height * width):
-    #                 Dijkstra_map_l[i][a - 20] = 100000
-    #         if int(player['y']) + 1 < height and Dijkstra_map_l[a + 20][a] == 50\
-    #                 and map[int(player['y']) + 1][int(player['x'])] != '+':
-    #             for i in range(height * width):
-    #                 Dijkstra_map_l[i][a + 20] = 100000
-    # res = {}
-    # # 遍历地图 看看地图上那些地方有分数
-    # num = 0
-    # gardes = []
-    # for i in range(height):  # 读取地图
-    #     for j in range(width):
-    #         if map[i][j][0] == 'p':
-    #             num += 1
-    #             gardes.append(i * height + j)
-    # 对每一个角色进行遍历 看看是不是自己的角色 如果是自己的角色就安排任务
+    #把相邻矩阵拿出来复制一遍
+    Dijkstra_map_l = copy.deepcopy(Dijkstra_map)
+    # 对每一个角色进行遍历 看看是不是自己的角色 如果不是自己的角色就变更权重矩阵
+    for player in players:
+        if player['team'] != constants.team_id:
+            a = int(player['y']) * height + int(player['x'])#计算敌人再权重矩阵中的位置
+            if int(player['x']) - 1 >= 0 and Dijkstra_map_l[a - 1][a] == 50 \
+                    and map[int(player['y'])][int(player['x']) - 1] != '+':
+                for i in range(height * width):
+                    Dijkstra_map_l[i][a - 1] = 100000
+            if int(player['x']) + 1 < width and Dijkstra_map_l[a + 1][a] == 50 \
+                    and map[int(player['y'])][int(player['x']) + 1] != '+':
+                for i in range(height * width):
+                    Dijkstra_map_l[i][a + 1] = 100000
+            if int(player['y']) - 1 >= 0 and Dijkstra_map_l[a - 20][a] == 50\
+                    and map[int(player['y']) - 1][int(player['x'])] != '+':
+                for i in range(height * width):
+                    Dijkstra_map_l[i][a - 20] = 100000
+            if int(player['y']) + 1 < height and Dijkstra_map_l[a + 20][a] == 50\
+                    and map[int(player['y']) + 1][int(player['x'])] != '+':
+                for i in range(height * width):
+                    Dijkstra_map_l[i][a + 20] = 100000
+    res = {}
+    # 遍历地图 看看地图上那些地方有分数
+    num = 0
+    gardes = []
+    for i in range(height):  # 读取地图
+        for j in range(width):
+            if map[i][j][0] == 'p':
+                num += 1
+                gardes.append(i * height + j)
+    #对每一个角色进行遍历 看看是不是自己的角色 如果是自己的角色就安排任务
     res = {}
     for player in players:
         if player['team'] == constants.team_id:
-            res[player['id']] = Defense1(map, player)
+            res[player['id']] = sweets(map,player,Dijkstra_map_l)
+            #res[player['id']] = Defense1(map, player)
+            # #遍历视野范围查看是否有敌人和分数
+            # dr = 0
+            # fs = []
+            # # 从临接矩阵中取出这一小节
+            # Dijkstra_map_l = [[100000 for i in range((2 * vision + 1) * (2 * vision + 1))] for i in range((2 * vision + 1) * (2 * vision + 1))]
+            # for i in range(int(player['y']) - vision,int(player['y']) + vision):
+            #     for j in range(int(player['x']) - vision,int(player['x']) + vision):
+            #         for y in range(int(player['y']) - vision, int(player['y']) + vision):
+            #             for x in range(int(player['x']) - vision, int(player['x']) + vision):
+            #                 try:
+            #                     Dijkstra_map_l[(i - (int(player['y']) - vision)) * (2 * vision + 1) + (j - (int(player['x']) - vision))]\
+            #                             [(y - (int(player['y']) - vision)) * (2 * vision + 1) + (x - (int(player['x']) - vision))]\
+            #                             = Dijkstra_map[i * height + j][y * height + x]
+            #                     if Dijkstra_map[i][j] != 100000:
+            #                         pass
+            #                 except Exception as e:
+            #                     Dijkstra_map_l[i - int(player['y']) - vision][j - int(player['x']) + vision] = 100000
+            # #判断地图更改权重
+            # for i in range(int(player['y']) - vision,int(player['y']) + vision):
+            #     for j in range(int(player['x']) - vision,int(player['x']) + vision):
+            #         #这里是敌人 改变它附近的地方的权重
+            #         try:
+            #             if map[i][j][0] == '-':
+            #                 x = j - (int(player['x']) - vision)
+            #                 y = i - (int(player['y']) - vision)
+            #                 l_ = y * (vision * 2 + 1) + x
+            #                 if x > 0:
+            #                     Dijkstra_map_l = Defense_change_l(l_ - 1, vision, Dijkstra_map_l)
+            #                 if x < 2 * vision:
+            #                     Dijkstra_map_l = Defense_change_l(l_ + 1, vision, Dijkstra_map_l)
+            #                 if y > 0:
+            #                     Dijkstra_map_l = Defense_change_l(l_ + 2, vision, Dijkstra_map_l)
+            #                 if y < 2 * vision:
+            #                     Dijkstra_map_l = Defense_change_l(l_ + 1, vision, Dijkstra_map_l)
+            #             #这里是分数 记录它
+            #             elif map[i][j][0] == 'p':
+            #                 fs.append((i - (int(player['y']) - vision)) * vision + j - (int(player['x']) - vision))
+            #         except Exception:
+            #             pass
+            # #计算返回路径
+            # x = int(((vision * 2 + 1) *vision + vision) / (2 * vision + 1))
+            # y = int(((vision * 2 + 1) *vision + vision) % (2 * vision + 1))
+            # [res_xy,n] = Dijkstra_all_minpath((2*vision + 1) * vision + vision,fs,Dijkstra_map_l ,1)
+            #
+            # res_xy = int(res_xy)
+            # # 计算下一步的位置
+            # res_y = int(res_xy / (2 * vision + 1))
+            # res_x = int(res_xy % (2 * vision + 1))
+            # # 计算走的方式
+            # if res_y == y and res_x == x - 1:
+            #     res[player['id']] = "left"
+            # elif res_y == y and res_x == x + 1:
+            #     res[player['id']] = "right"
+            # elif res_y == y - 1 and res_x == x:
+            #     res[player['id']] = "up"
+            # elif res_y == y + 1 and res_x == x:
+            #     res[player['id']] = "down"
+            # else:
+            #     res[player['id']] = ""
+
             # #视野中有分数 派一个人去吃它
             # if num != 0:
             #     y = int(player["y"])
@@ -772,8 +851,9 @@ def Defense(map, players,round_id):
             # #视野中没有分数 去刷新历史地图
             # else:
             #     res[player['id']] = Attack_myself(player, Dijkstra_map_l)
-
     return res
+
+
 def leg_start(msg):
     '''
     :param msg:
@@ -842,16 +922,17 @@ def leg_start(msg):
         for itm_a in msg['msg_data']['map']['wormhole']:
             if ord(itm_A['name']) == (ord(itm_a['name']) + 32)or itm_A['name'] == ord(itm_A['name']) == (ord(itm_a['name']) - 32):
                 Dijkstra_map[int(itm_a['y']) * height + int(itm_a['x'])][int(itm_A['y']) * height + int(itm_A['x'])] = 10
+                Dijkstra_map[int(itm_A['y']) * height + int(itm_A['x'])][int(itm_a['y']) * height + int(itm_a['x'])] = 10
     #快速通道的权值
     for itm in msg['msg_data']['map']['tunnel']:
         if itm['direction'] == 'down':
-            Dijkstra_map[int(itm['y']) * height + int(itm['x'])][(int(itm['y']) + 1)* height + int(itm['x'])] = 10
+            Dijkstra_map[int(itm['y']) * height + int(itm['x'])][(int(itm['y']) + 1) * height + int(itm['x'])] = 10
         elif itm['direction'] == 'up':
-            Dijkstra_map[int(itm['y']) * height + int(itm['x'])][(int(itm['y']) - 1)* height + int(itm['x'])] = 10
+            Dijkstra_map[int(itm['y']) * height + int(itm['x'])][(int(itm['y']) - 1) * height + int(itm['x'])] = 10
         elif itm['direction'] == 'left':
-            Dijkstra_map[int(itm['y']) * height + int(itm['x'])][(int(itm['y']))* height + int(itm['x']) - 1] = 10
+            Dijkstra_map[int(itm['y']) * height + int(itm['x'])][(int(itm['y'])) * height + int(itm['x']) - 1] = 10
         elif itm['direction'] == 'right':
-            Dijkstra_map[int(itm['y']) * height + int(itm['x'])][(int(itm['y']))* height + int(itm['x']) + 1] = 10
+            Dijkstra_map[int(itm['y']) * height + int(itm['x'])][(int(itm['y'])) * height + int(itm['x']) + 1] = 10
     map_f = copy.deepcopy(map_s)
     try:
         my_id = []
@@ -876,23 +957,6 @@ def leg_start(msg):
     print ("tunnel:%s" % msg['msg_data']['map']['tunnel'])
     print ("wormhole:%s" % msg['msg_data']['map']['wormhole'])
     print ("teams:%s" % msg['msg_data']['teams'])
-    f = open("./out.txt", "a")
-    for i in range(height):
-        for j in range(width):
-            print(map_s[i][j],end=" ",file=f)
-        print("",file=f)
-    print ("round start",file=f)
-    print (str(msg),file=f)
-
-    print ("msg_name:%s" % msg['msg_name'],file=f)
-    print ("map_width:%s" % msg['msg_data']['map']['width'],file=f)
-    print ("map_height:%s" % msg['msg_data']['map']['height'],file=f)
-    print ("vision:%s" % msg['msg_data']['map']['vision'],file=f)
-    print ("meteor:%s" % msg['msg_data']['map']['meteor'],file=f)
-    # print ("cloud:%s" % msg['msg_data']['map']['cloud'],file=f)
-    print ("tunnel:%s" % msg['msg_data']['map']['tunnel'],file=f)
-    print ("wormhole:%s" % msg['msg_data']['map']['wormhole'],file=f)
-    print ("teams:%s" % msg['msg_data']['teams'],file=f)
 
 def leg_end(msg):
     '''
@@ -922,13 +986,9 @@ def leg_end(msg):
         print ("teams:%s" % team['id'])
         print ("point:%s" % team['point'])
         print ("\n\n")
-    f = open("./out.txt", "a")
-    print ("round over",file=f)
 
 def game_over(msg):
     print ("game over!")
-    f = open("out.txt", "a")
-    print ("game over!", file = f)
 
 def round(msg):
     import random
@@ -938,9 +998,8 @@ def round(msg):
     return type: dict
     '''
     print("round")
-
     #移动方向定义
-    direction = {1: 'up', 2: 'down', 3: 'left', 4: 'right'}
+    #direction = {1: 'up', 2: 'down', 3: 'left', 4: 'right'}
     # #在原始地图上标注分数位置
     try:                                                                    #获取能量位置
         for itm in msg['msg_data']['power']:
@@ -948,12 +1007,12 @@ def round(msg):
     except KeyError:
        a = 1 + 1
     # 创建本回合的视野地图
-    round_map = copy.deepcopy(map_s)               #创建地图模型
+    round_map = copy.deepcopy(map_s)                                        #创建地图模型
     try:                                                                    #获取能量位置
         for itm in msg['msg_data']['power']:
             round_map[int(itm['y'])][int(itm['x'])] = 'p' + str(itm['point'])
     except KeyError:
-        a = 1 + 1
+        pass
     try:                                                                    #获取对手和自己的位置
         for itm in msg['msg_data']['players']:
             if itm['team'] == constants.team_id:
@@ -961,7 +1020,7 @@ def round(msg):
             else:
                 round_map[int(itm['y'])][int(itm['x'])] = "-" + str(itm['score'])
     except KeyError:
-        a = 1+1
+        pass
     #获取回合信息
     #获取回合号
     round_id = msg['msg_data']['round_id']
@@ -973,14 +1032,14 @@ def round(msg):
     # 获取本回合的进攻防守模式 beat防守 think进攻
     mode = msg['msg_data']['mode']
     # 记录足迹
-    for i in range(height * width):
-        if heistor_eye[i] != 0:
-            heistor_eye[i] -= 1
-    for player in players:
-        if player['team'] == constants.team_id:
-            for i in range(vision):
-                for j in range(vision):
-                    heistor_eye[(int(player['y']) + width * j) * height + int(player['x']) + i] = 40
+    # for i in range(height * width):
+    #     if heistor_eye[i] != 0:
+    #         heistor_eye[i] -= 1
+    # for player in players:
+    #     if player['team'] == constants.team_id:
+    #         for i in range(vision):
+    #             for j in range(vision):
+    #                 heistor_eye[(int(player['y']) + width * j) * height + int(player['x']) + i] = 40
     # 进攻模式
     if str(mode) == str(R_B):
         resove = Attack(round_map, players, round_id)
@@ -1000,17 +1059,17 @@ def round(msg):
         }
     }
     result['msg_data']['actions'] = action
-    ## 输出 和 日志
+    # 输出 和 日志
     f = open("./out.txt", "a")
     print("youshi:{}:{}".format(msg['msg_data']['mode'], round_id))
-    #print(result, file=f)
-    print("a = " + str(round_id), file=f)
-    print('msg = ' + str(msg), file=f)
-    print('print(ser.round(msg))', file=f)
-    # for i in range(height):
-    #     for j in range(width):
-    #         print(round_map[i][j], end=" ", file=f)----------
-    #     print("", end="\n", file=f)
+    print(round_id, file=f)
+    print("msg = " + str(msg), file=f)
+    print("print(ser.round(msg))", file=f)
+    print(result, file=f)
+    for i in range(height):
+        for j in range(width):
+            print(round_map[i][j], end=" ", file=f)
+        print("", end="\n", file=f)
 
     return result
 
