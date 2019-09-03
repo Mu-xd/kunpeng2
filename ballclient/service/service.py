@@ -727,6 +727,7 @@ def Defense(map, players,round_id):
                     and map[int(player['y']) + 1][int(player['x'])] != '+':
                 for i in range(height * width):
                     Dijkstra_map_l[i][a + 20] = 100000
+
     #res = {}
     # # 遍历地图 看看地图上那些地方有分数
     # num = 0
@@ -861,13 +862,13 @@ def leg_start(msg):
         elif itm['direction'] == 'left':
             Dijkstra_map[int(itm['y']) * height + int(itm['x'])][(int(itm['y'])) * height + int(itm['x']) - 1] = 10
             Dijkstra_map[int(itm['y']) * height + int(itm['x']) - 1][(int(itm['y'])) * height + int(itm['x'])] = 100000
-            Dijkstra_map[(int(itm['y']) - 1) * height + int(itm['x'])][(int(itm['y'])) * height + int(itm['x'])] = 100000
-            Dijkstra_map[(int(itm['y']) + 1) * height + int(itm['x'])][(int(itm['y'])) * height + int(itm['x'])] = 100000
+            Dijkstra_map[(int(itm['y'])) * height + int(itm['x'])][(int(itm['y']) - 1) * height + int(itm['x'])] = 100000
+            Dijkstra_map[(int(itm['y'])) * height + int(itm['x'])][(int(itm['y']) + 1) * height + int(itm['x'])] = 100000
         elif itm['direction'] == 'right':
             Dijkstra_map[int(itm['y']) * height + int(itm['x'])][(int(itm['y'])) * height + int(itm['x']) + 1] = 10
             Dijkstra_map[int(itm['y']) * height + int(itm['x']) + 1][(int(itm['y'])) * height + int(itm['x'])] = 100000
-            Dijkstra_map[(int(itm['y']) - 1) * height + int(itm['x'])][(int(itm['y'])) * height + int(itm['x'])] = 100000
-            Dijkstra_map[(int(itm['y']) + 1) * height + int(itm['x'])][(int(itm['y'])) * height + int(itm['x'])] = 100000
+            Dijkstra_map[(int(itm['y'])) * height + int(itm['x'])][(int(itm['y']) - 1) * height + int(itm['x'])] = 100000
+            Dijkstra_map[(int(itm['y'])) * height + int(itm['x'])][(int(itm['y']) + 1) * height + int(itm['x'])] = 100000
     map_f = copy.deepcopy(map_s)
     try:
         my_id = []
@@ -878,20 +879,6 @@ def leg_start(msg):
                     my_id.append(int(my['players'][i]))
     except KeyError:
         a = 1+1
-    for i in range(height):
-        for j in range(width):
-            print(map_s[i][j],end=" ")
-        print("")
-
-    print ("msg_name:%s" % msg['msg_name'])
-    print ("map_width:%s" % msg['msg_data']['map']['width'])
-    print ("map_height:%s" % msg['msg_data']['map']['height'])
-    print ("vision:%s" % msg['msg_data']['map']['vision'])
-    print ("meteor:%s" % msg['msg_data']['map']['meteor'])
-    # print ("cloud:%s" % msg['msg_data']['map']['cloud'])
-    print ("tunnel:%s" % msg['msg_data']['map']['tunnel'])
-    print ("wormhole:%s" % msg['msg_data']['map']['wormhole'])
-    print ("teams:%s" % msg['msg_data']['teams'])
 
 def leg_end(msg):
     '''
@@ -919,13 +906,9 @@ def leg_end(msg):
         print ("teams:%s" % team['id'])
         print ("point:%s" % team['point'])
         print ("\n\n")
-    f = open("./out.txt", "a")
-    print ("round over",file=f)
 
 def game_over(msg):
     print ("game over!")
-    f = open("out.txt", "a")
-    print ("game over!", file = f)
 
 def round(msg):
     import random
@@ -986,7 +969,6 @@ def round(msg):
         else:
             resove = Defense(round_map, players, round_id)
     except Exception as e:
-        print("fffffffffffffffffffffffffff" + str(round_id))
         direction = {1: 'up', 2: 'down', 3: 'left', 4: 'right'}
         for player in players:
             if player['team'] == constants.team_id:
@@ -1004,18 +986,6 @@ def round(msg):
         }
     }
     result['msg_data']['actions'] = action
-    ## 输出 和 日志
-    f = open("./out.txt", "a")
-    print("youshi:{}:{}".format(msg['msg_data']['mode'], round_id))
-    print("a = " + str(round_id), file=f)
-    print('msg = ' + str(msg), file=f)
-    print('print(ser.round(msg))', file=f)
-    print(result, file=f)
-    for i in range(height):
-        for j in range(width):
-            print(round_map[i][j], end=" ", file=f)
-        print("", end="\n", file=f)
-
     return result
 
 # pushd %CD%

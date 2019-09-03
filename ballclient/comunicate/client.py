@@ -58,14 +58,9 @@ def start(ip=None, port=None):
             else:
                 print("invalid msg_name.")
     except socket.error:
-        f = open("./out.txt", "a")
         print ("can not connect with server. %s,%s" % (ip, port))
-        print ("can not connect with server. %s,%s" % (ip, port),file=f)
     except Exception as e:
-        f =open("./out.txt", "a")
         print ("some error happend. the receive data:",data,type(data))
-        print ("some error happend. the receive data:",data,type(data),file=f)
-        print ("11111111",repr(e),file=f)
     finally:
         if _socket:
             _socket.close()
