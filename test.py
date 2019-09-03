@@ -6,8 +6,7 @@ ser.leg_start(msg)
 
 start = time.perf_counter()
 
-
-msg = {'msg_data': {'mode': 'beat', 'players': [{'id': 0, 'score': 10, 'sleep': 0, 'team': 1111, 'x': 7, 'y': 13}, {'id': 2, 'score': 6, 'sleep': 0, 'team': 1111, 'x': 5, 'y': 12}, {'id': 4, 'score': 0, 'sleep': 0, 'team': 1112, 'x': 4, 'y': 0}, {'id': 5, 'score': 5, 'sleep': 0, 'team': 1112, 'x': 5, 'y': 0}, {'id': 6, 'score': 2, 'sleep': 0, 'team': 1112, 'x': 8, 'y': 11}, {'id': 7, 'score': 5, 'sleep': 0, 'team': 1112, 'x': 8, 'y': 11}], 'power': [{'point': 2, 'x': 3, 'y': 2}, {'point': 2, 'x': 3, 'y': 3}, {'point': 2, 'x': 10, 'y': 11}], 'round_id': 15, 'teams': [{'id': 1111, 'point': 32, 'remain_life': 4}, {'id': 1112, 'point': 12, 'remain_life': 4}]}, 'msg_name': 'round'}
+msg = {'msg_data': {'mode': 'beat', 'players': [{'id': 0, 'score': 42, 'sleep': 0, 'team': 1111, 'x': 1, 'y': 8}, {'id': 1, 'score': 14, 'sleep': 0, 'team': 1111, 'x': 4, 'y': 6}, {'id': 2, 'score': 6, 'sleep': 0, 'team': 1111, 'x': 15, 'y': 6}, {'id': 3, 'score': 38, 'sleep': 0, 'team': 1111, 'x': 1, 'y': 7}, {'id': 4, 'score': 4, 'sleep': 0, 'team': 1112, 'x': 3, 'y': 7}, {'id': 5, 'score': 32, 'sleep': 0, 'team': 1112, 'x': 2, 'y': 7}, {'id': 6, 'score': 63, 'sleep': 0, 'team': 1112, 'x': 14, 'y': 6}, {'id': 7, 'score': 0, 'sleep': 0, 'team': 1112, 'x': 14, 'y': 6}], 'power': [{'point': 5, 'x': 2, 'y': 9}], 'round_id': 146, 'teams': [{'id': 1111, 'point': 110, 'remain_life': 4}, {'id': 1112, 'point': 131, 'remain_life': 3}]}, 'msg_name': 'round'}
 print(ser.round(msg))
 
 end = time.perf_counter()
